@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UFL Polska Liga - Tabela i Terminarz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            background-color: #0056b3;
+            color: #fff;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.8em;
+            flex-shrink: 0;
+        }
+
+        .login-container {
+            background-color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85em;
+            flex-wrap: wrap;
+            color: #333;
+        }
+        .login-container p {
+            margin: 0;
+            white-space: nowrap;
+        }
+        .login-container input[type="password"] {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 120px;
+            font-size: 0.9em;
+        }
+        .login-container button {
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+        .login-container button:hover {
+            background-color: #0056b3;
+        }
+        .login-container #loginError {
+            flex-basis: 100%;
+            text-align: right;
+            margin-top: 5px;
+            font-size: 0.8em;
+        }
+        .logout-button {
+            background-color: #dc3545;
+        }
+        .logout-button:hover {
+            background-color: #c82333;
+        }
+        /* Styl dla nowego przycisku zapisu */
+        .save-button {
+            background-color: #28a745; /* Zielony kolor */
+        }
+        .save-button:hover {
+            background-color: #218838;
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            padding: 0 20px 20px;
+            flex-grow: 1;
+        }
+        section {
+            padding: 25px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        .tabela-sekcja {
+            flex: 0 0 400px;
+            max-width: 400px;
+            min-width: 300px;
+        }
+        .terminarz-sekcja {
+            flex: 1;
+            min-width: 450px;
+            max-width: 700px;
+            overflow-y: auto;
+            max-height: calc(100vh - 150px);
+        }
+        h2 {
+            color: #0056b3;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85em;
+        }
+        th, td {
+            border: 1px solid #e0e0e0;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+        tr:hover {
+            background-color: #eef;
+        }
+        .pozycja {
+            width: 5%;
+        }
+        .nazwa-druzyny {
+            text-align: left;
+            width: 35%;
+            cursor: default;
+        }
+        .nazwa-druzyny.editable {
+            cursor: text;
+            background-color: #e6f7ff;
+            border: 1px dashed #007bff;
+        }
+        .nazwa-druzyny.editable:hover {
+            background-color: #d1efff;
+        }
+
+
+        /* Styl dla terminarza */
+        .terminarz-meczow ul {
+            list-style: none;
+            padding: 0;
+        }
+        .terminarz-meczow li {
+            background-color: #fdfdfd;
+            margin-bottom: 10px;
+            padding: 15px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1em;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-left: 5px solid #007bff;
+        }
+        .terminarz-meczow li strong {
+            color: #222;
+        }
+        .mecz-info {
+            flex-grow: 1;
+            text-align: left;
+            margin-right: 15px;
+        }
+        .wynik {
+            font-weight: bold;
+            color: #d9534f;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: default;
+            min-width: 70px;
+            text-align: center;
+            background-color: #f7f7f7;
+            transition: all 0.2s ease;
+        }
+        .wynik.editable {
+            cursor: text;
+            background-color: #fff;
+            border-color: #007bff;
+        }
+        .wynik.editable:hover {
+            background-color: #e6f7ff;
+        }
+        .kolejka-header {
+            background-color: #007bff;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        /* Responsywność */
+        @media (max-width: 900px) {
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .login-container {
+                position: static;
+                margin: 0;
+                padding: 10px 15px;
+                flex-direction: row; /* Domyślnie wiersz */
+                align-items: center;
+                width: 100%;
+                box-sizing: border-box;
+                justify-content: center;
+            }
+             .login-container p, .login-container label {
+                white-space: normal;
+                text-align: center;
+                flex-basis: 100%;
+            }
+            .login-container input[type="password"] {
+                flex-grow: 1;
+                width: auto;
+            }
+            .login-container button {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            /* Dodatkowo dla mobilnego - układ przycisków w rzędzie, ale przycisk hasła i logowania w osobnym wierszu*/
+            .login-container > *:not(p):not(label) { /* Elementy inne niż p i label */
+                flex-grow: 1;
+                width: 100%;
+            }
+            .login-container > p, .login-container > label {
+                text-align: center;
+            }
+             .login-container #loginError {
+                text-align: center;
+            }
+        }
+         @media (max-width: 500px) {
+            .login-container {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 8px;
+            }
+            .login-container input[type="password"],
+            .login-container button {
+                width: 100%;
+                margin-left: 0;
+                margin-right: 0;
+            }
+             .login-container p {
+                text-align: center;
+            }
+            .login-container #loginError {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>UFL Polska Liga</h1>
+        <div class="login-container" id="loginContainer">
+            <p>Aby edytować wyniki, zaloguj się:</p>
+            <label for="adminPassword" class="sr-only">Hasło administratora:</label>
+            <input type="password" id="adminPassword" placeholder="Hasło admina">
+            <button id="loginButton">Zaloguj</button>
+            <button id="saveButton" class="save-button">Zapisz Zmiany</button> <button id="logoutButton" class="logout-button">Wyloguj</button>
+            <p id="loginError"></p>
+        </div>
+    </header>
+
+    <div class="main-content" id="mainContent">
+        <section class="tabela-sekcja">
+            <h2>Tabela Ligowa</h2>
+            <table id="tabela-ligowa">
+                <thead>
+                    <tr>
+                        <th class="pozycja">Lp.</th>
+                        <th class="nazwa-druzyny">Drużyna</th>
+                        <th>M</th>
+                        <th>Z</th>
+                        <th>R</th>
+                        <th>P</th>
+                        <th>B+</th>
+                        <th>B-</th>
+                        <th>+/-</th>
+                        <th>Pkt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    </tbody>
+            </table>
+        </section>
+
+        <section class="terminarz-sekcja terminarz-meczow">
+            <h2>Terminarz Meczów</h2>
+            <div id="terminarz-list">
+                </div>
+        </section>
+    </div>
+
+    <script>
+        const NUM_TEAMS = 20;
+        let TEAMS = [];
+        const ADMIN_PASSWORD = "uflpolskaadmin1";
+
+        const LS_TEAMS_KEY = 'uflTeams';
+        const LS_MATCH_RESULTS_KEY = 'uflMatchResults';
+
+        const loginContainer = document.getElementById('loginContainer');
+        const adminPasswordInput = document.getElementById('adminPassword');
+        const loginButton = document.getElementById('loginButton');
+        const saveButton = document.getElementById('saveButton'); // Referencja do nowego przycisku
+        const logoutButton = document.getElementById('logoutButton');
+        const loginError = document.getElementById('loginError');
+        const mainContent = document.getElementById('mainContent');
+        const tabelaLigowaBody = document.querySelector('#tabela-ligowa tbody');
+        const terminarzList = document.getElementById('terminarz-list');
+
+        let teamStats = {};
+        let isLoggedIn = false;
+        let matchResults = new Map();
+
+        // --- Nowe/zmodyfikowane funkcje do zapisu i odczytu z localStorage ---
+
+        function saveData() {
+            try {
+                localStorage.setItem(LS_TEAMS_KEY, JSON.stringify(TEAMS));
+                localStorage.setItem(LS_MATCH_RESULTS_KEY, JSON.stringify(Array.from(matchResults.entries())));
+                console.log('Dane zapisane do localStorage.');
+                loginError.textContent = 'Zmiany zostały zapisane!';
+                loginError.style.color = '#28a745'; // Zielony kolor dla sukcesu
+                setTimeout(() => {
+                    loginError.textContent = '';
+                    loginError.style.color = 'red'; // Przywróć czerwony dla błędów
+                }, 3000);
+            } catch (e) {
+                console.error('Błąd podczas zapisu do localStorage:', e);
+                loginError.textContent = 'Błąd zapisu! Pamięć przeglądarki pełna?';
+                loginError.style.color = 'red';
+            }
+        }
+
+        function loadData() {
+            const savedTeams = localStorage.getItem(LS_TEAMS_KEY);
+            const savedMatchResults = localStorage.getItem(LS_MATCH_RESULTS_KEY);
+
+            if (savedTeams) {
+                TEAMS = JSON.parse(savedTeams);
+            } else {
+                TEAMS = Array.from({ length: NUM_TEAMS }, (_, i) => `Drużyna ${i + 1}`);
+            }
+
+            if (savedMatchResults) {
+                matchResults = new Map(JSON.parse(savedMatchResults));
+            } else {
+                matchResults = new Map();
+            }
+        }
+
+        // --- Istniejące funkcje (z drobnymi modyfikacjami) ---
+
+        function initializeTeamStats() {
+            teamStats = {};
+            TEAMS.forEach(team => {
+                teamStats[team] = {
+                    M: 0, Z: 0, R: 0, P: 0, B_plus: 0, B_minus: 0, Pkt: 0
+                };
+            });
+        }
+
+        function generateFullFixtures() {
+            const fixtures = [];
+            const teamsCopy = [...TEAMS];
+
+            for (let i = 0; i < NUM_TEAMS - 1; i++) {
+                const round = [];
+                for (let j = 0; j < NUM_TEAMS / 2; j++) {
+                    const homeTeam = teamsCopy[j];
+                    const awayTeam = teamsCopy[NUM_TEAMS - 1 - j];
+                    round.push({ home: homeTeam, away: awayTeam });
+                }
+                fixtures.push(round);
+
+                const lastTeam = teamsCopy.pop();
+                teamsCopy.splice(1, 0, lastTeam);
+            }
+
+            const allFixtures = [];
+            fixtures.forEach((round, index) => {
+                allFixtures.push({ roundNum: index + 1, matches: round });
+            });
+
+            fixtures.forEach((round, index) => {
+                const returnRound = round.map(match => ({ home: match.away, away: match.home }));
+                allFixtures.push({ roundNum: (NUM_TEAMS - 1) + index + 1, matches: returnRound });
+            });
+
+            return allFixtures;
+        }
+
+        function updateTable() {
+            tabelaLigowaBody.innerHTML = '';
+
+            let sortedTeams = Object.keys(teamStats).map(teamName => ({
+                name: teamName,
+                ...teamStats[teamName]
+            }));
+
+            sortedTeams.sort((a, b) => {
+                if (b.Pkt !== a.Pkt) return b.Pkt - a.Pkt;
+                if ((b.B_plus - b.B_minus) !== (a.B_plus - a.B_minus)) return (b.B_plus - b.B_minus) - (a.B_plus - a.B_minus);
+                if (b.B_plus !== a.B_plus) return b.B_plus - a.B_plus;
+                return a.name.localeCompare(b.name);
+            });
+
+            sortedTeams.forEach((team, index) => {
+                const row = tabelaLigowaBody.insertRow();
+                row.insertCell().textContent = index + 1;
+                const teamNameCell = row.insertCell();
+                teamNameCell.textContent = team.name;
+                teamNameCell.classList.add('nazwa-druzyny');
+                teamNameCell.dataset.teamName = team.name;
+
+                if (isLoggedIn) {
+                    teamNameCell.classList.add('editable');
+                    teamNameCell.contentEditable = true;
+
+                    teamNameCell.addEventListener('blur', (e) => {
+                        const oldName = e.target.dataset.teamName;
+                        const newName = e.target.textContent.trim();
+
+                        if (newName === oldName) {
+                            loginError.textContent = '';
+                            return;
+                        }
+
+                        if (!newName) {
+                            e.target.textContent = oldName;
+                            loginError.textContent = "Nazwa drużyny nie może być pusta!";
+                            loginError.style.color = 'red';
+                            setTimeout(() => loginError.textContent = '', 3000);
+                            return;
+                        }
+                        if (!/^[a-zA-Z0-9\sąćęłńóśźżĄĆĘŁŃÓŚŹŻ]+$/.test(newName)) {
+                            e.target.textContent = oldName;
+                            loginError.textContent = "Nazwa drużyny może zawierać tylko litery, cyfry i spacje!";
+                            loginError.style.color = 'red';
+                            setTimeout(() => loginError.textContent = '', 3000);
+                            return;
+                        }
+
+                        if (renameTeam(oldName, newName)) {
+                            e.target.dataset.teamName = newName;
+                            loginError.textContent = 'Nazwa drużyny zmieniona. Pamiętaj, aby zapisać zmiany!';
+                            loginError.style.color = 'orange'; // Wskazówka, że trzeba zapisać
+                            setTimeout(() => loginError.textContent = '', 5000);
+                            recalculateAllStats();
+                            renderFixtures(true);
+                            updateTable();
+                            // usunięto saveData() stąd, aby dać użytkownikowi kontrolę nad zapisem
+                        } else {
+                            e.target.textContent = oldName;
+                            loginError.textContent = "Nazwa drużyny już istnieje!";
+                            loginError.style.color = 'red';
+                            setTimeout(() => loginError.textContent = '', 3000);
+                        }
+                    });
+
+                    teamNameCell.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            teamNameCell.blur();
+                        }
+                    });
+                } else {
+                    teamNameCell.contentEditable = false;
+                    teamNameCell.classList.remove('editable');
+                }
+
+                row.insertCell().textContent = team.M;
+                row.insertCell().textContent = team.Z;
+                row.insertCell().textContent = team.R;
+                row.insertCell().textContent = team.P;
+                row.insertCell().textContent = team.B_plus;
+                row.insertCell().textContent = team.B_minus;
+                row.insertCell().textContent = team.B_plus - team.B_minus;
+                row.insertCell().textContent = team.Pkt;
+            });
+        }
+
+        function renameTeam(oldName, newName) {
+            if (TEAMS.includes(newName) && newName !== oldName) {
+                return false;
+            }
+
+            const index = TEAMS.indexOf(oldName);
+            if (index > -1) {
+                TEAMS[index] = newName;
+            }
+
+            const stats = teamStats[oldName];
+            delete teamStats[oldName];
+            teamStats[newName] = stats;
+
+            const newMatchResults = new Map();
+            matchResults.forEach((result, matchId) => {
+                let newMatchId = matchId;
+                const [home, away] = matchId.split('_vs_');
+
+                // Aktualizuj ID meczu, jeśli zawiera starą nazwę
+                if (home === oldName && away === oldName) {
+                     newMatchId = `${newName}_vs_${newName}`;
+                } else if (home === oldName) {
+                    newMatchId = `${newName}_vs_${away}`;
+                } else if (away === oldName) {
+                    newMatchId = `${home}_vs_${newName}`;
+                }
+                newMatchResults.set(newMatchId, result);
+            });
+            matchResults = newMatchResults;
+
+            return true;
+        }
+
+        function applyMatchResult(homeTeamName, awayTeamName, homeScore, awayScore, type = 'add') {
+            const homeStats = teamStats[homeTeamName];
+            const awayStats = teamStats[awayTeamName];
+
+            if (!homeStats || !awayStats) {
+                console.warn(`Błąd: Drużyna ${homeTeamName} lub ${awayTeamName} nie znaleziona w statystykach. Pomijanie.`);
+                return;
+            }
+
+            const multiplier = (type === 'add' ? 1 : -1);
+
+            homeStats.M += multiplier;
+            awayStats.M += multiplier;
+            homeStats.B_plus += homeScore * multiplier;
+            homeStats.B_minus += awayScore * multiplier;
+            awayStats.B_plus += awayScore * multiplier;
+            awayStats.B_minus += homeScore * multiplier;
+
+            if (homeScore > awayScore) {
+                homeStats.Z += multiplier;
+                homeStats.Pkt += 3 * multiplier;
+                awayStats.P += multiplier;
+            } else if (homeScore < awayScore) {
+                awayStats.Z += multiplier;
+                awayStats.Pkt += 3 * multiplier;
+                homeStats.P += multiplier;
+            } else {
+                homeStats.R += multiplier;
+                homeStats.Pkt += 1 * multiplier;
+                awayStats.R += multiplier;
+                awayStats.Pkt += 1 * multiplier;
+            }
+        }
+
+        function recalculateAllStats() {
+            initializeTeamStats();
+
+            // Potencjalnie, tutaj mogą pojawić się mecze z usuniętymi/zmienionymi nazwami drużyn.
+            // Ważne jest, aby `matchResults` było aktualne.
+            matchResults.forEach((result, matchId) => {
+                if (result !== ' - ') {
+                    const [homeTeamName, awayTeamName] = matchId.split('_vs_');
+                    const [homeScoreStr, awayScoreStr] = result.split('-');
+                    const homeScore = parseInt(homeScoreStr.trim());
+                    const awayScore = parseInt(awayScoreStr.trim());
+
+                    // Sprawdź, czy obie drużyny nadal istnieją w TEAMS (po ewentualnych zmianach nazw)
+                    if (TEAMS.includes(homeTeamName) && TEAMS.includes(awayTeamName) && !isNaN(homeScore) && !isNaN(awayScore)) {
+                        applyMatchResult(homeTeamName, awayTeamName, homeScore, awayScore, 'add');
+                    } else {
+                        console.warn(`Mecz ${matchId} z wynikiem ${result} zawiera niezarejestrowaną drużynę. Pomijanie w przeliczeniu.`);
+                        // Opcjonalnie: można by usunąć takie mecze z matchResults, aby oczyścić dane
+                        // matchResults.delete(matchId);
+                    }
+                }
+            });
+            updateTable();
+        }
+
+        function renderFixtures(isEditable) {
+            terminarzList.innerHTML = '';
+
+            const allFixtures = generateFullFixtures();
+
+            allFixtures.forEach(kolejka => {
+                const kolejkaHeader = document.createElement('div');
+                kolejkaHeader.classList.add('kolejka-header');
+                kolejkaHeader.textContent = `Kolejka ${kolejka.roundNum}`;
+                terminarzList.appendChild(kolejkaHeader);
+
+                const ul = document.createElement('ul');
+                kolejka.matches.forEach(match => {
+                    const matchId = `${match.home}_vs_${match.away}`;
+
+                    const li = document.createElement('li');
+                    const matchInfoSpan = document.createElement('span');
+                    matchInfoSpan.classList.add('mecz-info');
+                    matchInfoSpan.innerHTML = `<strong>${match.home}</strong> vs <strong>${match.away}</strong>`;
+                    li.appendChild(matchInfoSpan);
+
+                    const resultSpan = document.createElement('span');
+                    resultSpan.classList.add('wynik');
+                    // Pobierz wynik z mapy matchResults. Jeśli ID meczu mogło się zmienić,
+                    // upewnij się, że matchResults zostało zaktualizowane w renameTeam()
+                    resultSpan.textContent = matchResults.get(matchId) || ' - ';
+                    resultSpan.dataset.matchId = matchId;
+
+                    if (isEditable) {
+                        resultSpan.classList.add('editable');
+                        resultSpan.contentEditable = true;
+
+                        resultSpan.addEventListener('blur', (e) => {
+                            const newResult = e.target.textContent.trim();
+                            const currentMatchId = e.target.dataset.matchId;
+                            const oldResult = matchResults.get(currentMatchId) || ' - ';
+
+                            const regex = /^\d+-\d+$/;
+
+                            if (newResult === oldResult) {
+                                loginError.textContent = '';
+                                return;
+                            }
+
+                            if (!newResult || newResult === ' - ') {
+                                if (oldResult !== ' - ') {
+                                    const [oldHomeScoreStr, oldAwayScoreStr] = oldResult.split('-');
+                                    const [homeTeamFromId, awayTeamFromId] = currentMatchId.split('_vs_');
+                                    applyMatchResult(homeTeamFromId, awayTeamFromId, parseInt(oldHomeScoreStr), parseInt(oldAwayScoreStr), 'subtract');
+                                    matchResults.set(currentMatchId, ' - ');
+                                    recalculateAllStats();
+                                    loginError.textContent = 'Wynik usunięty. Pamiętaj, aby zapisać zmiany!';
+                                    loginError.style.color = 'orange';
+                                    setTimeout(() => loginError.textContent = '', 5000);
+                                }
+                                e.target.textContent = ' - ';
+                                return;
+                            }
+
+                            if (regex.test(newResult)) {
+                                if (oldResult !== ' - ') {
+                                    const [oldHomeScoreStr, oldAwayScoreStr] = oldResult.split('-');
+                                    const [homeTeamFromId, awayTeamFromId] = currentMatchId.split('_vs_');
+                                    applyMatchResult(homeTeamFromId, awayTeamFromId, parseInt(oldHomeScoreStr), parseInt(oldAwayScoreStr), 'subtract');
+                                }
+                                const [newHomeScoreStr, newAwayScoreStr] = newResult.split('-');
+                                const [homeTeamFromId, awayTeamFromId] = currentMatchId.split('_vs_');
+                                applyMatchResult(homeTeamFromId, awayTeamFromId, parseInt(newHomeScoreStr), parseInt(newAwayScoreStr), 'add');
+
+                                matchResults.set(currentMatchId, newResult);
+                                recalculateAllStats();
+                                loginError.textContent = 'Wynik zmieniony. Pamiętaj, aby zapisać zmiany!';
+                                loginError.style.color = 'orange';
+                                setTimeout(() => loginError.textContent = '', 5000);
+                            } else {
+                                e.target.textContent = oldResult;
+                                loginError.textContent = "Błędny format wyniku (np. 2-1)!";
+                                loginError.style.color = 'red';
+                                setTimeout(() => loginError.textContent = '', 3000);
+                            }
+                        });
+
+                        resultSpan.addEventListener('keydown', (e) => {
+                            if (e.key === 'Enter') {
+                                e.preventDefault();
+                                resultSpan.blur();
+                            }
+                        });
+                    }
+                    li.appendChild(resultSpan);
+                    ul.appendChild(li);
+                });
+                terminarzList.appendChild(ul);
+            });
+        }
+
+        // Funkcja logowania
+        loginButton.addEventListener('click', () => {
+            if (adminPasswordInput.value === ADMIN_PASSWORD) {
+                isLoggedIn = true;
+                updateTable();
+                renderFixtures(true);
+                loginError.textContent = '';
+                adminPasswordInput.value = '';
+                loginButton.style.display = 'none';
+                logoutButton.style.display = 'inline-block';
+                saveButton.style.display = 'inline-block'; // Pokaż przycisk zapisu
+                alert('Zalogowano jako administrator! Możesz teraz edytować wyniki i nazwy drużyn.');
+            } else {
+                loginError.textContent = 'Nieprawidłowe hasło.';
+                loginError.style.color = 'red';
+            }
+        });
+
+        // Funkcja wylogowania
+        logoutButton.addEventListener('click', () => {
+            isLoggedIn = false;
+            updateTable();
+            renderFixtures(false);
+            adminPasswordInput.value = '';
+            loginButton.style.display = 'inline-block';
+            logoutButton.style.display = 'none';
+            saveButton.style.display = 'none'; // Ukryj przycisk zapisu
+            alert('Wylogowano.');
+            loginError.textContent = ''; // Wyczyść ewentualne komunikaty
+        });
+
+        // Podpięcie funkcji zapisu do nowego przycisku
+        saveButton.addEventListener('click', saveData);
+
+        // Obsługa Enter w polu hasła
+        adminPasswordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                loginButton.click();
+            }
+        });
+
+        // Inicjalizacja przy ładowaniu strony
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            initializeTeamStats(); // Inicjalizuj statystyki po wczytaniu drużyn
+            recalculateAllStats();
+            renderFixtures(false);
+            // Upewnij się, że przycisk zapisu jest domyślnie ukryty
+            saveButton.style.display = 'none';
+        });
+
+    </script>
+</body>
+</html>
